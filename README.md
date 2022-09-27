@@ -1,12 +1,12 @@
-# Project 3 - *Name of App Here*
+# Project 3 - Play with soul
 
-**Name of your app** is a basic twitter app to read your tweets.
+Play with soul is a basic twitter app to read your tweets.
 
-Time spent: **X** hours spent in total
+Time spent: 6 hours spent in total
 
 ## User Stories
 
-The following **required** functionality is completed:
+The following functionality is completed:
 
 - [x] User sees app icon in home screen and styled launch screen. (1pt)
 - [x] User can log in. (1pt)

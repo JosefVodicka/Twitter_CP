@@ -12,20 +12,28 @@ class HomeTableViewController: UITableViewController {
     
     var tweetArray = [NSDictionary]()
     var numberOfTweet: Int!
+    
+    let myRefershControl = UIRefreshControl()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         loadTweet()
+        
+        myRefershControl.addTarget(self, action: #selector(loadTweet), for: .valueChanged)
+        
+        tableView.refreshControl = myRefershControl
     }
     
-    func loadTweet(){
+    @objc func loadTweet(){
+        
+        numberOfTweet = 20
         
         let myUrl = "https://api.twitter.com/1.1/statuses/home_timeline.json"
         
 
-        let myParams = ["count": 10]
+        let myParams = ["count": numberOfTweet]
         
-        TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams, success: { (tweets: [NSDictionary]) in
+        TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams as [String : Any], success: { (tweets: [NSDictionary]) in
             
             self.tweetArray.removeAll()
             
@@ -35,12 +43,51 @@ class HomeTableViewController: UITableViewController {
             
             self.tableView.reloadData()
             
+            self.myRefershControl.endRefreshing()
+            
         }, failure: { (Error) in
            
             print("Couldnt retreive tweets!")
             print(Error.localizedDescription)
         })
         
+    }
+    
+    
+    func loadMoreTweets(){
+        
+        let myUrl = "https://api.twitter.com/1.1/statuses/home_timeline.json"
+        
+        numberOfTweet = numberOfTweet + 20
+        
+        let myParams = ["count":numberOfTweet]
+        
+        TwitterAPICaller.client?.getDictionariesRequest(url: myUrl, parameters: myParams as [String : Any], success: { (tweets: [NSDictionary]) in
+            
+            self.tweetArray.removeAll()
+            
+            for tweet in tweets{
+                self.tweetArray.append(tweet)
+            }
+            
+            self.tableView.reloadData()
+            
+            self.myRefershControl.endRefreshing()
+            
+        }, failure: { (Error) in
+           
+            print("Couldnt retreive tweets!")
+            print(Error.localizedDescription)
+        })
+        
+        
+    }
+    
+    
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath){
+        if indexPath.row + 1 == tweetArray.count{
+            loadMoreTweets()
+        }
     }
     
 
@@ -57,8 +104,18 @@ class HomeTableViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "tweetCell",for: indexPath) as! TweetCellTableViewCell
         
-        cell.userNameLabel.text = "Some name"
+        let user = tweetArray[indexPath.row]["user"] as! NSDictionary
+        
+        
+        cell.userNameLabel.text = user["name"] as? String
         cell.tweetContent.text = tweetArray[indexPath.row]["text"] as? String
+        
+        let imgUrl = URL(string: (user["profile_image_url_https"] as? String)!)
+        let data = try? Data(contentsOf: imgUrl!)
+        
+        if let imageData = data{
+            cell.profileImageView.image = UIImage(data: imageData)
+        }
         
         return cell
     }
